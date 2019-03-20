@@ -24,7 +24,7 @@ const particlesOptions = {
 const initialState = {
   input: '',
   imageUrl: '',
-  box: {},
+  box: [],
   route: 'signin',
   isSignedIn: false,
   user: {
@@ -53,20 +53,25 @@ class App extends Component {
   }
 
   calculateFaceLocation = (data) => {
-    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
     const image = document.getElementById('inputimage');
     const width = Number(image.width);
     const height = Number(image.height);
-    return {
-      leftCol: clarifaiFace.left_col * width,
-      topRow: clarifaiFace.top_row * height,
-      rightCol: width - (clarifaiFace.right_col * width),
-      bottomRow: height - (clarifaiFace.bottom_row * height)
-    }
+    const { regions } = data.outputs[0].data;
+    const boxArray = [];
+    regions.forEach(region => {
+      const { bounding_box } = region.region_info;
+      boxArray.push({
+        leftCol: bounding_box.left_col * width,
+        topRow: bounding_box.top_row * height,
+        rightCol: width - (bounding_box.right_col * width),
+        bottomRow: height - (bounding_box.bottom_row * height)        
+      });
+    })
+    return boxArray;
   }
 
-  displayFaceBox = (box) => {
-    this.setState({box: box});
+  displayFaceBox = (boxArray) => {
+    this.setState({box: boxArray});
   }
 
   onInputChange = (event) => {
@@ -132,7 +137,7 @@ class App extends Component {
                 onInputChange={this.onInputChange}
                 onButtonSubmit={this.onButtonSubmit}
               />
-              <FaceRecognition box={box} imageUrl={imageUrl} />
+              <FaceRecognition boxArray={box} imageUrl={imageUrl} />
             </div>
           : (
              route === 'signin'
